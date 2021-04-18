@@ -1,1 +1,1 @@
-# drome: monadic effects for OCaml 🎛
+# drome: monadic effects tookit for OCaml
