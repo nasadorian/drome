@@ -44,3 +44,26 @@ CSCI E-51, Spring 2021
     - [ ] Complete and working
   * Project writeup
     - [ ] Complete writing 
+
+## Demo Program
+
+__Read and print loop with IO__
+
+```ocaml
+  (* No need to defer *)
+  let read : string io = IO.lift read_line
+  (* PPX should turn `print_string s` into `fun _ -> print_string s` *)
+  let print (s : string) : unit io = IO.defer (print_string s)
+  
+  (* Combine read and print infinitely using bind and productL *)
+  let rec loop : unit io =
+    IO.( (read >>= print) *> loop )
+
+  (* Run synchronously *)
+  utop # IO.unsafe_run_sync loop
+  <in> hi
+  hi
+  <in> there
+  there
+  <Ctrl-C>
+```
