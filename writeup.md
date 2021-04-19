@@ -50,14 +50,11 @@ TODO: Rewrite proposal as abstract
 __Echo loop with IO__
 
 ```ocaml
-  (* No need to defer since `read_line` already has type `unit -> string`  *)
-  let read : string io = IO.lift read_line
-  (* PPX should turn `print_string s` into `fun _ -> print_string s` *)
-  let print (s : string) : unit io = IO.suspend (print_string s)
+  let read : string io = IO.suspend read_line
+  let print (s : string) : unit io = IO.suspend (fun _ -> print_endline s)
   
   (* Combine read and print infinitely using bind and productL *)
-  let rec echo : unit io =
-    IO.( (read >>= print) *> loop )
+  let rec echo : unit io = IO.( (read >>= print) *> echo )
 
   (* Run synchronously *)
   utop # IO.unsafe_run_sync echo

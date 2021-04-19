@@ -1,3 +1,5 @@
+open Util
+
 module IO = struct
   type 'a thunk = unit -> 'a
 
@@ -24,6 +26,14 @@ module IO = struct
 
   let ( <*> ) (f : ('a -> 'b) io) (aio : 'a io) : 'b io = ap f aio
 
+  let productR (aio : 'a io) (bio : 'b io) : 'b io = aio >>= fun _ -> bio
+
+  let ( *> ) = productR
+
+  let productL (aio : 'a io) (bio : 'b io) : 'a io = bio >>= fun _ -> aio
+
+  let ( <* ) = productL
+
   let rec unsafe_run_sync : type a. a io -> a = function
     | Pure a -> a
     | Suspend a -> a ()
@@ -37,10 +47,10 @@ module IO = struct
         match aio with
         | Pure a -> f a
         | Suspend ta -> f (ta ())
-        | Bind (g, aio') -> unsafe_run_sync (failwith "")
-        | Map (g, aio') -> unsafe_run_sync (failwith ""))
-  (*| Map (f, aio) -> f ((unsafe_run_sync [@tailcall]) aio)*)
+        | Bind (g, aio') -> unsafe_run_sync (aio' >>= fun a -> g a <$> f)
+        | Map (g, aio') -> unsafe_run_sync (Map (f << g, aio')))
 
+  (* rewrite this as part of AST *)
   let attempt (aio : 'a io) : (exn, 'a) result io =
     suspend @@ fun _ ->
     try Result.ok (unsafe_run_sync aio) with e -> Result.error e

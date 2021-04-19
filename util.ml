@@ -1,5 +1,5 @@
 let compose (g : 'b -> 'c) (f : 'a -> 'b) (a : 'a) : 'c = g (f a)
 
-let ( << ) g f = compose g f
+let ( << ) = compose
 
-let ( >> ) = Fun.flip ( << )
+let ( >> ) f g : ('a -> 'b) -> ('b -> 'c) -> 'a -> 'c = g << f
