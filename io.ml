@@ -15,7 +15,8 @@ module IO = struct
 
   let bind (f : 'a -> 'b io) (aio : 'a io) : 'b io = Bind (f, aio)
 
-  let map (f : 'a -> 'b) (aio : 'a io) : 'b io = Map (f, aio)
+  let map (f : 'a -> 'b) (aio : 'a io) : 'b io =
+    match aio with Map (g, bio) -> Map (f << g, bio) | _ -> Map (f, aio)
 
   let ap (fio : ('a -> 'b) io) (aio : 'a io) : 'b io =
     bind (fun a -> map (fun f -> f a) fio) aio
