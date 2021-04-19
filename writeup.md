@@ -6,7 +6,8 @@ CSCI E-51, Spring 2021
 # drome: monadic effects for OCaml 
 
 ## Abstract
-<!--TODO: Rewrite proposal as abstract-->
+
+TODO: Rewrite proposal as abstract
 
 ## Milestones
 

@@ -24,11 +24,24 @@ module IO = struct
 
   let ( <*> ) (f : ('a -> 'b) io) (aio : 'a io) : 'b io = ap f aio
 
-  let x = if true then () else ()
-
   let rec unsafe_run_sync : type a. a io -> a = function
     | Pure a -> a
     | Suspend a -> a ()
-    | Bind (f, aio) -> f (unsafe_run_sync aio) |> unsafe_run_sync
-    | Map (f, aio) -> f (unsafe_run_sync aio)
+    | Bind (f, aio) -> (
+        match aio with
+        | Pure a -> unsafe_run_sync (f a)
+        | Suspend ta -> unsafe_run_sync (f (ta ()))
+        | Bind (g, aio') -> unsafe_run_sync (aio' >>= fun a -> g a >>= f)
+        | Map (g, aio') -> unsafe_run_sync (aio' >>= fun a -> f (g a)))
+    | Map (f, aio) -> (
+        match aio with
+        | Pure a -> f a
+        | Suspend ta -> f (ta ())
+        | Bind (g, aio') -> unsafe_run_sync (failwith "")
+        | Map (g, aio') -> unsafe_run_sync (failwith ""))
+  (*| Map (f, aio) -> f ((unsafe_run_sync [@tailcall]) aio)*)
+
+  let attempt (aio : 'a io) : (exn, 'a) result io =
+    suspend @@ fun _ ->
+    try Result.ok (unsafe_run_sync aio) with e -> Result.error e
 end
