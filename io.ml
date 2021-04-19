@@ -1,8 +1,6 @@
 open Util
 
 module IO = struct
-  type 'a thunk = unit -> 'a
-
   type _ io =
     | Pure : 'a -> 'a io
     | Suspend : 'a thunk -> 'a io
