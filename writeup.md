@@ -14,12 +14,11 @@ CSCI E-51, Spring 2021
   * IO
     - [ ] Complete unsafe synchronous DSL implementation
     - [ ] Add delay and error handling capabilities
-    - [ ] Preprocessor directive for `defer`
     - [ ] Begin writing tests
   * Resource
     - [ ] Sketch out Resource DSL signature
   * Demo program
-    - [ ] Determine idea to implement with IO and Resource
+    - [ ] Come up with demo idea to implement via IO and Resource
   * Typeclass
     - [ ] Can combinator functionality (bind, map, etc) be captured in shared sig? Do not need a fully fledged typeclass hierarchy.
 
@@ -75,7 +74,7 @@ __Pure functional retry__
 
   (* GET a URL and convert its status to an integer *)
   let status_of_url (url : string) : int io =
-    IO.suspend (
+    IO.suspend (fun _ ->
       Client.get (Uri.of_string url)
         |> Lwt_main.run
         |> fst
