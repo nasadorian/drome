@@ -6,8 +6,15 @@ open CS51Utils.Absbook
 let repl_test _ =
   let read = suspend read_line in
   let print (s : string) : unit io = suspend (fun _ -> print_endline s) in
-  let rec loop () = (read >>= print) *> loop () in
+  (*let rec loop () = (read >>= print) *> loop () in*)
+  let rec loop () = read >>= print >>= loop in
   loop
+
+let bind_tests _ =
+  let v = pure 39 in
+  let plus i = suspend (fun _ -> i + 1) in
+  let prog = v >>= plus >>= plus >>= plus in
+  unit_test (unsafe_run_sync prog = 42) "bind -- triple bind"
 
 let product_tests _ =
   let r = ref 41 in
@@ -18,10 +25,12 @@ let product_tests _ =
   unit_test
     (unsafe_run_sync lr;
      !r = 42)
-    "productR left first";
+    "productR -- left first";
   unit_test
     (unsafe_run_sync rl;
      !r = 43)
-    "productL right first"
+    "productL -- right first"
 
-let _ = product_tests ()
+let _ =
+  bind_tests ();
+  product_tests ()

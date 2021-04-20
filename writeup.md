@@ -58,11 +58,11 @@ __Echo loop with IO__
 
   (* Run synchronously *)
   utop # IO.unsafe_run_sync echo
-  <in> hi
+  <in>hi
   hi
-  <in> there
+  <in>there
   there
-  <Ctrl-C>
+  ^CInterrupted.
 ```
 
 __Pure functional retry__
