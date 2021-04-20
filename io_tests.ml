@@ -2,13 +2,11 @@ open Io.IO (* TODO don't like this import *)
 
 open CS51Utils.Absbook
 
-let loop_test _ =
+(* This should simply compile and can be tested manually *)
+let repl_test _ =
   let read = suspend read_line in
   let print (s : string) : unit io = suspend (fun _ -> print_endline s) in
-  let rec loop () =
-    let run = read >>= print in
-    run *> Defer loop
-  in
+  let rec loop () = (read >>= print) *> loop () in
   loop
 
 let product_tests _ =

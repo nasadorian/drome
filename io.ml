@@ -12,9 +12,13 @@ module IO = struct
 
   let suspend (a : 'a thunk) : 'a io = Suspend a
 
-  let bind (f : 'a -> 'b io) (aio : 'a io) : 'b io =
-    Defer (fun _ -> Bind (f, aio))
+  (* Delays an IO action in a thunk -- supports trampolined bind *)
+  let defer (a : 'a io) : 'a io = Defer (fun _ -> a)
 
+  (* Monadic bind -- deferred to support trampolined infinite recursion *)
+  let bind (f : 'a -> 'b io) (aio : 'a io) : 'b io = Bind (f, aio) |> defer
+
+  (* Fused map operation -- composes f << g on nested maps *)
   let map (f : 'a -> 'b) (aio : 'a io) : 'b io =
     match aio with Map (g, bio) -> Map (f << g, bio) | _ -> Map (f, aio)
 
@@ -27,6 +31,11 @@ module IO = struct
 
   let ( <*> ) (f : ('a -> 'b) io) (aio : 'a io) : 'b io = ap f aio
 
+  (* left-to-right composition of Kleisli arrows aka "fish operator" *)
+  let kleisli (f : 'a -> 'b io) (g : 'b -> 'c io) : 'a -> 'c io = failwith ""
+
+  let ( >=> ) = kleisli
+
   let productR (aio : 'a io) (bio : 'b io) : 'b io = aio >>= fun _ -> bio
 
   let ( *> ) = productR
@@ -35,6 +44,7 @@ module IO = struct
 
   let ( <* ) = productL
 
+  (* TODO: optimize map and bind fusions *)
   let rec unsafe_run_sync : type a. a io -> a = function
     | Pure a -> a
     | Suspend a -> a ()
@@ -44,7 +54,7 @@ module IO = struct
         | Pure a -> unsafe_run_sync (f a)
         | Suspend ta -> unsafe_run_sync (f (ta ()))
         | Defer io -> unsafe_run_sync (io () >>= f)
-        | Bind (g, aio') -> unsafe_run_sync (aio' >>= fun a -> g a >>= f)
+        | Bind (g, aio') -> unsafe_run_sync (Bind (g >=> f, aio'))
         | Map (g, aio') -> unsafe_run_sync (aio' >>= fun a -> f (g a)))
     | Map (f, aio) -> (
         match aio with
