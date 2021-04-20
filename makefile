@@ -1,12 +1,12 @@
 BUILD = ocamlbuild -use-ocamlfind
 
-all: io util typeclasses instances doc
+all: io io_tests util typeclasses instances doc
 
 io: io.ml
 	$(BUILD) io.byte
 
 io_tests: io_tests.ml io
-	$(BUILD) io_tests.ml
+	$(BUILD) io_tests.byte
 
 util: util.ml
 	$(BUILD) util.byte
@@ -19,3 +19,9 @@ instances: instances.ml typeclasses
 
 doc: writeup.md
 	pandoc -f markdown -o writeup.pdf writeup.md
+
+test: io_tests
+	./io_tests.byte
+
+clean:
+	rm -rf *.byte; rm writeup.pdf
