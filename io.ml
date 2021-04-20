@@ -48,6 +48,7 @@ module IO = struct
         match aio with
         | Pure a -> unsafe_run_sync (f a)
         | Suspend ta -> unsafe_run_sync (f (ta ()))
+        (* Trampolining occurs here via monad associativity law *)
         | Bind (g, aio') -> unsafe_run_sync (Bind (g >=> f, aio'))
         | Map (g, aio') -> unsafe_run_sync (aio' >>= fun a -> f (g a)))
     | Map (f, aio) -> (
@@ -55,9 +56,10 @@ module IO = struct
         | Pure a -> f a
         | Suspend ta -> f (ta ())
         | Bind (g, aio') -> unsafe_run_sync (aio' >>= fun a -> g a <$> f)
+        (* Map fusion via functor composition law *)
         | Map (g, aio') -> unsafe_run_sync (Map (f << g, aio')))
 
-  let attempt (aio : 'a io) : (exn, 'a) result io =
+  let attempt (aio : 'a io) : ('a, exn) result io =
     suspend @@ fun _ ->
     try Result.ok (unsafe_run_sync aio) with e -> Result.error e
 end
