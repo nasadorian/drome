@@ -41,7 +41,6 @@ module IO = struct
 
   let ( <* ) = productL
 
-  (* TODO: optimize map and bind fusions *)
   let rec unsafe_run_sync : type a. a io -> a = function
     | Pure a -> a
     | Suspend a -> a ()
@@ -58,7 +57,6 @@ module IO = struct
         | Bind (g, aio') -> unsafe_run_sync (aio' >>= fun a -> g a <$> f)
         | Map (g, aio') -> unsafe_run_sync (Map (f << g, aio')))
 
-  (* TODO: rewrite this as part of AST *)
   let attempt (aio : 'a io) : (exn, 'a) result io =
     suspend @@ fun _ ->
     try Result.ok (unsafe_run_sync aio) with e -> Result.error e
