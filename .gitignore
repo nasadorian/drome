@@ -107,4 +107,6 @@ $RECYCLE.BIN/
 
 .git/
 *.pdf
+
+*.byte
 # End of https://www.gitignore.io/api/ocaml,macos,linux,windows
