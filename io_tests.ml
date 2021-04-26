@@ -1,4 +1,4 @@
-open Io.IO (* TODO don't like this import *)
+open Io (* TODO don't like this import *)
 
 open CS51Utils.Absbook
 
@@ -31,17 +31,17 @@ let product_tests _ =
      !r = 43)
     "productL -- right first"
 
-let attempt_tests _ =
-  let v = pure 39 in
-  let up i =
-    if i = 42 then raise (Invalid_argument "bork") else pure (succ i)
-  in
-  let prog = v >>= up >>= up >>= up >>= up in
-  unit_test
-    (unsafe_run_sync (attempt prog) = Result.error (Invalid_argument "bork"))
-    "attempt -- catch exception"
+(*let attempt_tests _ =*)
+  (*let v = pure 39 in*)
+  (*let up i =*)
+    (*if i = 42 then raise (Invalid_argument "bork") else pure (succ i)*)
+  (*in*)
+  (*let prog = v >>= up >>= up >>= up >>= up in*)
+  (*unit_test*)
+    (*(unsafe_run_sync (attempt prog) = Result.error (Invalid_argument "bork"))*)
+    (*"attempt -- catch exception"*)
 
 let _ =
   bind_tests ();
-  product_tests ();
-  attempt_tests ()
+  product_tests ()
+  (*attempt_tests ()*)
