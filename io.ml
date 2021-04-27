@@ -46,13 +46,6 @@ let ( <* ) = productL
 
 let raise_error (io : 'a io) (e : exn) : 'a io = Error (e, io)
 
-let result_traverse :
-    type a b. (a -> b io) -> (a, exn) result -> (b, exn) result io =
- fun f r ->
-  match Result.map f r with
-  | Result.Ok io -> io <$> Result.ok
-  | Result.Error e -> pure (Result.Error e)
-
 let rec unsafe_run_sync : type a. a io -> a = function
   | Pure a -> a
   | Suspend a -> a ()

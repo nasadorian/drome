@@ -42,11 +42,11 @@ module type ApplicativeError = sig
 
   val raise_error : exn -> 'a f
 
-  (*val handle_error_with : (exn -> 'a f) -> 'a f -> 'a f*)
+  val handle_error_with : (exn -> 'a f) -> 'a f -> 'a f
 
-  (*val handle_error : (exn -> 'a) -> 'a f -> 'a f*)
+  val handle_error : (exn -> 'a) -> 'a f -> 'a f
 
-  val attempt : 'a f -> (exn, 'a) result f
+  val attempt : 'a f -> ('a, exn) result f
 end
 
 module type MonadError = sig
@@ -58,7 +58,7 @@ module type MonadError = sig
 end
 
 (*
- * Typeclass deriving "functors"
+ * Typeclass derivation "functors"
  *)
 
 module MakeApplicative (M : Monad) : Applicative with type 'a f = 'a M.f =
@@ -84,13 +84,4 @@ module MakeFunctor (A : Applicative) : Functor with type 'a f = 'a A.f = struct
   let map f fa = pure f <*> fa
 
   let ( <$> ) fa f = map f fa
-end
-
-module MakeApplicativeError (A : Applicative) :
-  ApplicativeError with type 'a f = 'a A.f = struct
-  type 'a f = 'a A.f
-
-  let raise_error (e : exn) : 'a A.f = A.pure (raise e)
-
-  let attempt fa = failwith ""
 end
