@@ -3,6 +3,7 @@
  *)
 
 open Typeclasses
+open Util
 open Io
 
 module IOMonad : Monad = struct
