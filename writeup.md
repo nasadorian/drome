@@ -49,7 +49,7 @@ TODO: Rewrite proposal as abstract
 
 ### Summary
 
-My implementation of the `IO` monad is called `drome`, named after the Dromedary camel used widely in Africa. My approach is loosely inspired by the one taken seen in Scala's [cats-effect](https://github.com/typelevel/cats-effect) library, which is to encode all possible actions in a single free algebra and interpret them with various runtimes. The key difference in my implementation however is that I'm using OCaml's generalized algebraic datatype (GADT) capabilities whereas the Scala version relies heavily on object oriented patterns and JVM specific hacks. I've found my version so far to be elegant and more readable than the `cats-effect`'s source code, with a predicted tradeoff being runtime performance.
+My implementation of the `IO` monad is called `drome`, named after the Dromedary camel used widely in Africa. My approach is loosely inspired by the one taken seen in Scala's [cats-effect](https://github.com/typelevel/cats-effect) library, which is to encode all possible actions in a single free algebra and interpret it with various runtimes. The key difference in my implementation however is that I'm using OCaml's generalized algebraic datatype (GADT) capabilities whereas the Scala version relies heavily on object oriented patterns and JVM specific hacks. I've found my version so far to be elegant and more readable than the `cats-effect`'s source code, with a predicted tradeoff being runtime performance.
 
 I've spent 20+ hours on this project so far, with a majority of the time being
 spent writing and debugging the `IO` DSL interpreter.
