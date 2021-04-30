@@ -1,5 +1,5 @@
 open Drome.IO
-open Drome.IOInstances
+open Instances.IOInstances
 open CS51Utils.Absbook
 
 (* This should simply compile and can be tested manually *)

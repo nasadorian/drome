@@ -60,3 +60,12 @@ module IOApplicativeError : ApplicativeError with type 'a f = 'a io = struct
 end
 
 module IOMonadError = MakeMonadError (IOApplicativeError) (IOMonad)
+
+(* Gather all the IO instances for convenient import *)
+module IOInstances = struct
+  include IOFunctor
+  include IOApplicative
+  include IOMonad
+  include IOApplicativeError
+  include IOMonadError
+end

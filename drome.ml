@@ -2,26 +2,16 @@ open Io_base
 open Instances
 open Util
 
-(*TODO fill in API we want to expose*)
-module type IOAPI = sig end
-
-(* Gather all IO instances for convenience *)
-module IOInstances = struct
-  include IOFunctor
-  include IOApplicative
-  include IOMonad
-  include IOApplicativeError
-  include IOMonadError
-end
-
 module IO = struct
   include Io_base
   include IOInstances
 
+  (* suspend a -- lifts a deferred action into the IO context
+   * This is the main entry point for most IO programs *)
   let suspend (a : 'a thunk) : 'a io = Suspend a
 
-  let pure (a : 'a) : 'a io = Pure a
-
+  (* unsafe_run_sync -- executes an IO program synchronously
+   * "unsafe" means unhandled errors in sequence will be thrown *)
   let rec unsafe_run_sync : type a. a io -> a = function
     | Pure a -> a
     | Suspend a -> a ()
@@ -55,7 +45,7 @@ module IO = struct
     | HandleErrorWith (h, io) ->
         unsafe_run_sync (lift_attempt io >>= Result.fold ~ok:pure ~error:h)
 
-  (* Suspends an unsafe action, catching any exceptions in a `result` *)
+  (* lift_attempt -- suspends an IO action, catching exceptions in `result` *)
   and lift_attempt : type a. a io -> (a, exn) result io =
    fun io ->
     Suspend
