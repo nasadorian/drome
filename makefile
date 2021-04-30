@@ -1,11 +1,14 @@
 BUILD = ocamlbuild -use-ocamlfind
 
-all: io io_tests util typeclasses instances doc
+all: drome io_base io_tests util typeclasses instances doc
 
-io: io.ml
-	$(BUILD) io.byte
+drome: drome.ml io_base util
+	$(BUILD) drome.byte
 
-io_tests: io_tests.ml io
+io_base: io_base.ml
+	$(BUILD) io_base.byte
+
+io_tests: io_tests.ml io_base drome
 	$(BUILD) io_tests.byte
 
 util: util.ml
