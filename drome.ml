@@ -1,6 +1,7 @@
 open Io_base
 open Instances
 open Util
+open Thread
 
 module IO = struct
   include Io_base
@@ -50,4 +51,12 @@ module IO = struct
    fun io ->
     Suspend
       (fun _ -> try Result.ok (unsafe_run_sync io) with e -> Result.error e)
+
+  (* unsafe_run_async io cb -- executes IO program in another thread; call
+   * callback cb when finished executing *)
+  let unsafe_run_async (io : 'a io) (cb : 'a -> 'b) : Thread.t =
+    Thread.create (cb << unsafe_run_sync) io
+
+  (* unsafe_run_async' io -- executes IO program in another thread no callback *)
+  let unsafe_run_async' (io : 'a io) : Thread.t = unsafe_run_async io id
 end

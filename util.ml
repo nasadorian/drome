@@ -7,3 +7,5 @@ let ( << ) = compose
 let ( >> ) f g : ('a -> 'b) -> ('b -> 'c) -> 'a -> 'c = g << f
 
 let flip (f : 'a -> 'b -> 'c) : 'b -> 'a -> 'c = fun b a -> f a b
+
+let id a = a

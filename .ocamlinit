@@ -1,2 +1,6 @@
+#require "threads.posix"
 #mod_use "util.ml"
-#use "io.ml"
+#mod_use "io_base.ml"
+#mod_use "typeclasses.ml"
+#mod_use "instances.ml"
+#use "drome.ml"
