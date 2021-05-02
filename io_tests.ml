@@ -44,22 +44,29 @@ let attempt_tests _ =
     "attempt -- catch exception"
 
 let resource_tests _ =
+  let mem = ref [] in
   let file = suspend (fun _ -> open_in "testfile") in
   let close c =
     suspend (fun _ ->
-        print_endline "closed!";
-        close_in c)
+        close_in c;
+        mem := "closed" :: !mem)
   in
-  let rec read l c =
+  let rec read c =
     suspend (fun _ ->
         let s = input_line c in
-        s :: l)
-    >>= fun l' -> read l' c
+        mem := s :: !mem;
+        c)
+    >>= read
   in
   let res = Resource.make file close in
-  Resource.use (read []) res |> attempt |> unsafe_run_sync
+  let out = Resource.use read res |> attempt |> unsafe_run_sync in
+  unit_test
+    (!mem = [ "closed"; "row3"; "row2"; "row1"; "row0" ]
+    && out = Result.error End_of_file)
+    "Resource.use -- drain a file and close it"
 
-let _ = resource_tests ()
-(*bind_tests ();*)
-(*product_tests ();*)
-(*attempt_tests ()*)
+let _ =
+  bind_tests ();
+  product_tests ();
+  attempt_tests ();
+  resource_tests ()
