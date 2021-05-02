@@ -1,4 +1,4 @@
-open Io_base
+open Dsl
 open Drome.IO
 open Drome
 open Instances.IOInstances
@@ -50,18 +50,14 @@ let resource_tests _ =
         print_endline "closed!";
         close_in c)
   in
-  let read_print c =
+  let rec read l c =
     suspend (fun _ ->
-        input_line c |> print_endline;
-        input_line c |> print_endline;
-        input_line c |> print_endline;
-        input_line c |> print_endline;
-        input_line c |> print_endline;
-        c)
+        let s = input_line c in
+        s :: l)
+    >>= fun l' -> read l' c
   in
-
   let res = Resource.make file close in
-  Resource.use read_print res |> attempt |> unsafe_run_sync
+  Resource.use (read []) res |> attempt |> unsafe_run_sync
 
 let _ = resource_tests ()
 (*bind_tests ();*)

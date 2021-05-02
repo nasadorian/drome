@@ -4,7 +4,7 @@
 
 open Typeclasses
 open Util
-open Io_base
+open Dsl
 
 module IOMonad : Monad with type 'a f = 'a io = MakeMonad (struct
   type 'a f = 'a io
@@ -41,7 +41,7 @@ module IOApplicativeError : ApplicativeError with type 'a f = 'a io = struct
 
   let attempt (io : 'a io) : ('a, exn) result io = Attempt io
 
-  let adapt_error (io : 'a io) (h : exn -> exn) : 'a io =
+  let adapt_error (h : exn -> exn) (io : 'a io) : 'a io =
     let h' e = raise_error (h e) in
     HandleErrorWith (h', io)
 end

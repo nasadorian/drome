@@ -69,7 +69,7 @@ module type ApplicativeError = sig
 
   val attempt : 'a f -> ('a, exn) result f
 
-  val adapt_error : 'a f -> (exn -> exn) -> 'a f
+  val adapt_error : (exn -> exn) -> 'a f -> 'a f
 end
 
 module type MonadError = sig

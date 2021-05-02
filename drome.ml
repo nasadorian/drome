@@ -1,4 +1,4 @@
-open Io_base
+open Dsl
 open Instances
 open Util
 open Thread
@@ -13,7 +13,7 @@ module IO = struct
    * main starting point for most IO programs *)
   let suspend (a : 'a thunk) : 'a io = Suspend a
 
-  (* unsafe_run_sync -- executes an IO program synchronously
+  (* unsafe_run_sync -- executes an IO program synchronously;
    * "unsafe" means unhandled errors in sequence will be thrown *)
   let rec unsafe_run_sync : type a. a io -> a = function
     | Pure a -> a
@@ -64,20 +64,14 @@ module IO = struct
 end
 
 module Resource = struct
+  include ResourceInstances
+
+  (* make a r -- acquire resource `a` in IO, and encode how to release it
+   * with function `r` *)
   let make (acq : 'a io) (rel : 'a -> unit io) : 'a resource =
     Allocate (rel, acq)
 
-  let bind f r = RBind (f, r)
-
-  let pure (a : 'a) : 'a resource = RPure a
-
-  let map (f : 'a -> 'b) (r : 'a resource) : 'b resource =
-    let f' a = pure (f a) in
-    RBind (f', r)
-
-  let kleisli f g a = bind g (f a)
-
-  (* use u r -- acquire resource, apply `u` to it then release *)
+  (* use u r -- apply `u` a resource then release it *)
   let rec use : type a b. (a -> b io) -> a resource -> b io =
    fun u r ->
     match r with
@@ -96,7 +90,7 @@ module Resource = struct
               acquire >>= fun a ->
               let res' = f a in
               use u res' <* release a)
-        | RBind (g, res') -> use u (RBind (kleisli g f, res'))
+        | RBind (g, res') -> use u (RBind (g >=> f, res'))
         | RPure a -> use u (f a))
     | RPure a -> u a
 end
