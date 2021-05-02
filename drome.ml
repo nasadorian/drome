@@ -93,4 +93,7 @@ module Resource = struct
         | RBind (g, res') -> use u (RBind (g >=> f, res'))
         | RPure a -> use u (f a))
     | RPure a -> u a
+
+  (* use' r -- acquire and release resource with a no-op `u` action *)
+  let use' : type a. a resource -> a io = fun r -> use IO.pure r
 end

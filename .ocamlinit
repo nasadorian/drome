@@ -5,4 +5,4 @@
 #mod_use "typeclasses.ml"
 #mod_use "instances.ml"
 #mod_use "drome.ml"
-#use "io_tests.ml"
+#use "resource_tests.ml"
