@@ -1,4 +1,6 @@
+open Io_base
 open Drome.IO
+open Drome
 open Instances.IOInstances
 open CS51Utils.Absbook
 
@@ -41,7 +43,27 @@ let attempt_tests _ =
     (unsafe_run_sync (attempt prog) = Result.error (Invalid_argument "bork"))
     "attempt -- catch exception"
 
-let _ =
-  bind_tests ();
-  product_tests ();
-  attempt_tests ()
+let resource_tests _ =
+  let file = suspend (fun _ -> open_in "testfile") in
+  let close c =
+    suspend (fun _ ->
+        print_endline "closed!";
+        close_in c)
+  in
+  let read_print c =
+    suspend (fun _ ->
+        input_line c |> print_endline;
+        input_line c |> print_endline;
+        input_line c |> print_endline;
+        input_line c |> print_endline;
+        input_line c |> print_endline;
+        c)
+  in
+
+  let res = Resource.make file close in
+  Resource.use read_print res |> attempt |> unsafe_run_sync
+
+let _ = resource_tests ()
+(*bind_tests ();*)
+(*product_tests ();*)
+(*attempt_tests ()*)

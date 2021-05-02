@@ -4,8 +4,9 @@ open Util
 open Thread
 
 module IO = struct
-  include Io_base
   include IOInstances
+
+  let empty : unit io = pure ()
 
   (* suspend a -- lifts a deferred action into the IO context
    * main starting point for most IO programs *)
@@ -62,8 +63,6 @@ module IO = struct
 end
 
 module Resource = struct
-  include Io_base
-
   let make (acq : 'a io) (rel : 'a -> unit io) : 'a resource =
     Allocate (rel, acq)
 
@@ -77,22 +76,26 @@ module Resource = struct
 
   let kleisli f g a = bind g (f a)
 
-  let rec use : type a b. (a -> b) -> a resource -> b io =
+  (* use u r -- acquire resource, apply `u` to it then release *)
+  let rec use : type a b. (a -> b io) -> a resource -> b io =
    fun u r ->
     match r with
     | Allocate (release, acquire) ->
         IO.(
           acquire >>= fun a ->
-          let out = u a in
-          release a *> pure out)
+          (* handle failure during use and ensure resource release *)
+          let action =
+            handle_error_with (fun e -> release a *> raise_error e) (u a)
+          in
+          action >>= fun x -> release a *> pure x)
     | RBind (f, res) -> (
         match res with
         | Allocate (release, acquire) ->
             IO.(
               acquire >>= fun a ->
               let res' = f a in
-              release a *> use u res')
+              use u res' <* release a)
         | RBind (g, res') -> use u (RBind (kleisli g f, res'))
         | RPure a -> use u (f a))
-    | RPure a -> IO.pure (u a)
+    | RPure a -> u a
 end
