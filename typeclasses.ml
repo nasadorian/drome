@@ -27,6 +27,10 @@ module type Applicative = sig
   val ap : ('a -> 'b) f -> 'a f -> 'b f
 
   val ( <*> ) : ('a -> 'b) f -> 'a f -> 'b f
+
+  val zip : 'a f -> 'b f -> ('a * 'b) f
+
+  val ( >*< ) : 'a f -> 'b f -> ('a * 'b) f
 end
 
 (* TODO: Monad syntax should be derived from a simpler interface bind/return *)
@@ -96,7 +100,7 @@ module MakeMonad (M : BaseMonad) : Monad with type 'a f = 'a M.f = struct
 
   let ( *> ) = productR
 
-  let productL (a : 'a f) (b : 'b f) : 'a f = b >>= fun _ -> a
+  let productL (a : 'a f) (b : 'b f) : 'a f = a >>= fun a' -> b *> return a'
 
   let ( <* ) = productL
 end
@@ -115,6 +119,10 @@ struct
     fa >>= fun a -> return (f a)
 
   let ( <*> ) = ap
+
+  let zip af ab = pure (fun a b -> (a, b)) <*> af <*> ab
+
+  let ( >*< ) = zip
 end
 
 (* Derive Functor via Applicative *)

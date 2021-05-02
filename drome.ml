@@ -82,7 +82,7 @@ module Resource = struct
           let action =
             handle_error_with (fun e -> release a *> raise_error e) (u a)
           in
-          action >>= fun x -> release a *> pure x)
+          action <* release a)
     | RBind (f, res) -> (
         match res with
         | Allocate (release, acquire) ->
