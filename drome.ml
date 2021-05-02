@@ -6,7 +6,8 @@ open Thread
 module IO = struct
   include IOInstances
 
-  let empty : unit io = pure ()
+  (* noop -- unit lifted into IO; an action representing doing nothing *)
+  let noop : unit io = pure ()
 
   (* suspend a -- lifts a deferred action into the IO context
    * main starting point for most IO programs *)

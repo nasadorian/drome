@@ -6,7 +6,7 @@ open Typeclasses
 open Util
 open Io_base
 
-module IOMonad : Monad with type 'a f = 'a io = struct
+module IOMonad : Monad with type 'a f = 'a io = MakeMonad (struct
   type 'a f = 'a io
 
   (* return a -- suspends value `a` in IO
@@ -15,20 +15,7 @@ module IOMonad : Monad with type 'a f = 'a io = struct
 
   (* Monadic bind -- deferred to support trampolined infinite recursion *)
   let bind f io = Bind (f, io)
-
-  let ( >>= ) io f = Bind (f, io)
-
-  (* left-to-right composition of Kleisli arrows aka the "fish operator" *)
-  let ( >=> ) f g a = f a >>= g
-
-  let productR (aio : 'a io) (bio : 'b io) : 'b io = aio >>= fun _ -> bio
-
-  let ( *> ) = productR
-
-  let productL (aio : 'a io) (bio : 'b io) : 'a io = bio >>= fun _ -> aio
-
-  let ( <* ) = productL
-end
+end)
 
 module IOApplicative = MakeApplicative (IOMonad)
 
@@ -68,4 +55,26 @@ module IOInstances = struct
   include IOMonad
   include IOApplicativeError
   include IOMonadError
+end
+
+(* Resource instances -- deriving Monad, Applicative and Functor *)
+module ResourceMonad : Monad with type 'a f = 'a resource = MakeMonad (struct
+  type 'a f = 'a resource
+
+  let return a = Allocate ((fun _ -> Pure ()), Suspend (fun _ -> a))
+
+  let bind f res = RBind (f, res)
+end)
+
+module ResourceApplicative : Applicative with type 'a f = 'a resource =
+  MakeApplicative (ResourceMonad)
+
+module ResourceFunctor : Functor with type 'a f = 'a resource =
+  MakeFunctor (ResourceApplicative)
+
+(* Gather all Resource instances for convenient import *)
+module ResourceInstances = struct
+  include ResourceFunctor
+  include ResourceApplicative
+  include ResourceMonad
 end

@@ -29,6 +29,15 @@ module type Applicative = sig
   val ( <*> ) : ('a -> 'b) f -> 'a f -> 'b f
 end
 
+(* TODO: Monad syntax should be derived from a simpler interface bind/return *)
+module type BaseMonad = sig
+  type _ f
+
+  val return : 'a -> 'a f
+
+  val bind : ('a -> 'b f) -> 'a f -> 'b f
+end
+
 module type Monad = sig
   type _ f
 
@@ -69,6 +78,27 @@ module type MonadError = sig
   val rethrow : ('a, exn) result f -> 'a f
 
   val ensure : ('a -> bool) -> exn -> 'a f -> 'a f
+end
+
+(* Extend BaseMonad with nice syntax & derived operators *)
+module MakeMonad (M : BaseMonad) : Monad with type 'a f = 'a M.f = struct
+  type 'a f = 'a M.f
+
+  let return = M.return
+
+  let bind = M.bind
+
+  let ( >>= ) af f = bind f af
+
+  let ( >=> ) (f : 'a -> 'b f) (g : 'b -> 'c f) (a : 'a) : 'c f = f a >>= g
+
+  let productR (a : 'a f) (b : 'b f) : 'b f = a >>= fun _ -> b
+
+  let ( *> ) = productR
+
+  let productL (a : 'a f) (b : 'b f) : 'a f = b >>= fun _ -> a
+
+  let ( <* ) = productL
 end
 
 (* Derive Applicative from Monad *)
