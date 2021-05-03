@@ -1,13 +1,17 @@
+(*
+  resource_tests.ml -- unit tests for the Resource module
+*)
+
 open CS51Utils.Absbook
 open Drome
 open IO
 
 (* open a file in IO context *)
-let open_file path = suspend (fun _ -> open_in path)
+let open_file path = make (fun _ -> open_in path)
 
 (* close file and write matermark `s` into memory location *)
 let close s mem c =
-  suspend (fun _ ->
+  make (fun _ ->
       close_in c;
       (* add a watermark to prove finalizer was executed *)
       mem := s :: !mem)
@@ -22,16 +26,15 @@ let drain_file mem file =
       done
     with End_of_file -> ())
 
-let print_file (r : in_channel Dsl.resource) : unit Dsl.io =
-  Resource.use
-    (fun c ->
-      IO.suspend (fun _ ->
+(* print contents of file to console; useful for debugging *)
+let print_file : in_channel Dsl.resource -> unit Dsl.io =
+  Resource.use (fun c ->
+      IO.make (fun _ ->
           try
             while true do
               input_line c |> print_endline
             done
           with End_of_file -> ()))
-    r
 
 (* check basic Resource mechanics, assuring unconditional finalize step *)
 let basic _ =
@@ -39,7 +42,7 @@ let basic _ =
   let file = open_file "test-data/file0" in
   (* infinitely loop on file allowing End_of_file to be thrown *)
   let rec read c =
-    suspend (fun _ ->
+    make (fun _ ->
         let s = input_line c in
         mem := s :: !mem;
         c)
@@ -71,7 +74,7 @@ let zip_3_files _ =
   let prog =
     Resource.use
       (fun ((f0, f1), f2) ->
-        suspend (fun _ ->
+        make (fun _ ->
             try
               while true do
                 mem := (input_line f0, input_line f1, input_line f2) :: !mem

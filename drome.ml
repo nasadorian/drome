@@ -1,17 +1,25 @@
+(*
+  drome.ml -- main modules for the drome library
+*)
+
 open Dsl
 open Instances
 open Util
 open Thread
 
+(* the IO monad -- *)
 module IO = struct
   include IOInstances
 
-  (* noop -- unit lifted into IO; an action representing doing nothing *)
+  (* make a -- lifts a deferred action into IO;
+   * this is the main starting point for most IO programs *)
+  let make (a : 'a thunk) : 'a io = Suspend a
+
+  (* noop -- unit in IO; an action representing doing nothing *)
   let noop : unit io = pure ()
 
-  (* suspend a -- lifts a deferred action into the IO context
-   * main starting point for most IO programs *)
-  let suspend (a : 'a thunk) : 'a io = Suspend a
+  (* sleep t -- pauses the current thread for `t` seconds *)
+  let sleep (t : float) : unit io = make (fun _ -> Thread.delay t)
 
   (* unsafe_run_sync -- executes an IO program synchronously;
    * "unsafe" means unhandled errors in sequence will be thrown *)
@@ -59,7 +67,7 @@ module IO = struct
   let unsafe_run_async (cb : 'a -> 'b) (io : 'a io) : Thread.t =
     Thread.create (cb << unsafe_run_sync) io
 
-  (* unsafe_run_async' io -- executes IO program in another thread no callback *)
+  (* unsafe_run_async' io -- executes IO in another thread; no callback *)
   let unsafe_run_async' (io : 'a io) : Thread.t = unsafe_run_async id io
 end
 

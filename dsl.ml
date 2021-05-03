@@ -1,5 +1,5 @@
 (*
- dsl.ml -- Domain specific language for the IO monad and related constructs.
+  dsl.ml -- domain specific language types for IO and related constructs
 *)
 
 open Util

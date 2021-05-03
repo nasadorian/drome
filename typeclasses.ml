@@ -1,7 +1,5 @@
-open Util
-
 (*         
-           The typeclass hierarchy used in `drome`
+  typeclasses.ml -- the typeclass hierarchy used in `drome`
  
                   ApplicativeError ----- MonadError
                        /                /   
@@ -10,6 +8,8 @@ open Util
      Functor ---- Applicative ----- Monad 
 
  *)
+
+open Util
 
 module type Functor = sig
   type _ f

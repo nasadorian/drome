@@ -26,8 +26,8 @@ instances: instances.ml typeclasses
 doc: writeup.md
 	pandoc -f markdown -o writeup.pdf writeup.md
 
-test: resource_tests
-	./resource_tests.byte
+test: resource_tests io_tests
+	./resource_tests.byte && ./io_tests.byte
 
 clean:
 	rm -rf *.byte; rm writeup.pdf

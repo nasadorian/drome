@@ -1,3 +1,7 @@
+(*
+  util.ml -- sundry utilities and types
+*)
+
 type 'a thunk = unit -> 'a
 
 let compose (g : 'b -> 'c) (f : 'a -> 'b) (a : 'a) : 'c = g (f a)
