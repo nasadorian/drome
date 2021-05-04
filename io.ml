@@ -29,7 +29,7 @@ let rec unsafe_run_sync : type a. a io -> a =
   function
   | Pure a -> a
   | Suspend a -> a ()
-  (* inspect 2nd level of Bind node to perform optimizations *)
+  (* inspect next node below Bind and perform optimizations *)
   | Bind (f, io) -> (
       match io with
       | Pure a -> unsafe_run_sync (f a)
@@ -42,7 +42,7 @@ let rec unsafe_run_sync : type a. a io -> a =
       | HandleErrorWith (h, io) ->
           unsafe_run_sync
             (lift_attempt io >>= Result.fold ~ok:f ~error:(h >=> f)))
-  (* inspect 2nd level of Map node to perform optimizations *)
+  (* inspect next node below Map and perform optimizations *)
   | Map (f, io) -> (
       match io with
       | Pure a -> f a
