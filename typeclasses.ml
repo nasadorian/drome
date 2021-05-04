@@ -33,7 +33,7 @@ module type Applicative = sig
   val ( >*< ) : 'a f -> 'b f -> ('a * 'b) f
 end
 
-(* TODO: Monad syntax should be derived from a simpler interface bind/return *)
+(* Implement BaseMonad and use MakeMonad functor for extended API and syntax *)
 module type BaseMonad = sig
   type _ f
 

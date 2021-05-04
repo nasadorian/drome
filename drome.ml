@@ -1,5 +1,5 @@
 (*
-  drome.ml -- main modules for the drome library
+  drome.ml -- main module aliases for the drome library
 *)
 
 module IO = Io

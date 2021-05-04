@@ -1,5 +1,5 @@
 (*
-  refio.ml -- purely functional, thread-safe references
+  refio.ml -- a purely functional, thread-safe reference type
 *)
 
 open Dsl

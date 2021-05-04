@@ -39,7 +39,7 @@ doc: writeup.md
 	pandoc -f markdown -o writeup.pdf writeup.md
 
 test: resource_tests io_tests refio_tests
-	./refio_tests.byte
+	./io_tests.byte && ./resource_tests.byte && ./refio_tests.byte
 
 clean:
 	rm -rf *.byte; rm writeup.pdf

@@ -72,6 +72,7 @@ let atomicity _ =
     || (artist = "Celine Dion" && rank = 42))
     "RefIO -- ensure atomicity of updates"
 
+(* run all of the tests! *)
 let _ =
   set_and_get ();
   modify ();
