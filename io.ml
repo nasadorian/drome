@@ -70,10 +70,10 @@ let unsafe_run_async (cb : 'a -> 'b) : 'a io -> Thread.t =
  * N.B. defining this function as partially applied confuses the compiler *)
 let unsafe_run_async' (io : 'a io) : Thread.t = unsafe_run_async id io
 
-(* suspend_async cb io -- run IO with callback in another thread *)
+(* suspend_async cb io -- deferred run of IO with callback in another thread *)
 let suspend_async (cb : 'a -> 'b) (io : 'a io) : Thread.t io =
   make (fun _ -> unsafe_run_async cb io)
 
-(* suspend_async' io -- run IO in another thread; no callback *)
+(* suspend_async' io -- deferred run of IO in another thread; no callback *)
 let suspend_async' (io : 'a io) : Thread.t io =
   make (fun _ -> unsafe_run_async' io)
