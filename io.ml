@@ -1,5 +1,5 @@
 (*
-  io.ml -- the IO monad
+  io.ml -- runtime implementation for the IO monad
 *)
 
 open Instances
@@ -19,9 +19,17 @@ let sleep (t : float) : unit io = make (fun _ -> Thread.delay t)
 
 (* unsafe_run_sync -- executes an IO program synchronously;
  * "unsafe" means unhandled errors in sequence will be thrown *)
-let rec unsafe_run_sync : type a. a io -> a = function
+let rec unsafe_run_sync : type a. a io -> a =
+  (* used for Attempt nodes; catches exceptions in `result` for a given IO *)
+  let lift_attempt : type a. a io -> (a, exn) result io =
+   fun io ->
+    Suspend
+      (fun _ -> try Result.ok (unsafe_run_sync io) with e -> Result.error e)
+  in
+  function
   | Pure a -> a
   | Suspend a -> a ()
+  (* inspect 2nd level of Bind node to perform optimizations *)
   | Bind (f, io) -> (
       match io with
       | Pure a -> unsafe_run_sync (f a)
@@ -34,6 +42,7 @@ let rec unsafe_run_sync : type a. a io -> a = function
       | HandleErrorWith (h, io) ->
           unsafe_run_sync
             (lift_attempt io >>= Result.fold ~ok:f ~error:(h >=> f)))
+  (* inspect 2nd level of Map node to perform optimizations *)
   | Map (f, io) -> (
       match io with
       | Pure a -> f a
@@ -52,16 +61,19 @@ let rec unsafe_run_sync : type a. a io -> a = function
   | HandleErrorWith (h, io) ->
       unsafe_run_sync (lift_attempt io >>= Result.fold ~ok:pure ~error:h)
 
-(* lift_attempt -- suspends an IO action, catching exceptions in `result` *)
-and lift_attempt : type a. a io -> (a, exn) result io =
- fun io ->
-  Suspend
-    (fun _ -> try Result.ok (unsafe_run_sync io) with e -> Result.error e)
-
 (* unsafe_run_async io cb -- executes IO program in another thread; calling
  * callback `cb` when finished executing *)
-let unsafe_run_async (cb : 'a -> 'b) (io : 'a io) : Thread.t =
-  Thread.create (cb << unsafe_run_sync) io
+let unsafe_run_async (cb : 'a -> 'b) : 'a io -> Thread.t =
+  Thread.create (cb << unsafe_run_sync)
 
-(* unsafe_run_async' io -- executes IO in another thread; no callback *)
+(* unsafe_run_async' io -- executes IO in another thread; no callback
+ * N.B. defining this function as partially applied confuses the compiler *)
 let unsafe_run_async' (io : 'a io) : Thread.t = unsafe_run_async id io
+
+(* suspend_async cb io -- run IO with callback in another thread *)
+let suspend_async (cb : 'a -> 'b) (io : 'a io) : Thread.t io =
+  make (fun _ -> unsafe_run_async cb io)
+
+(* suspend_async' io -- run IO in another thread; no callback *)
+let suspend_async' (io : 'a io) : Thread.t io =
+  make (fun _ -> unsafe_run_async' io)
