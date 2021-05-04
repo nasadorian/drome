@@ -2,6 +2,6 @@
   drome.ml -- main modules for the drome library
 *)
 
+module IO = Io
 module RefIO = Refio.RefIO
-module IO = Io.IO
-module Resource = Resource.Resource
+module Resource = Resource

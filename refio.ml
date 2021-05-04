@@ -1,9 +1,9 @@
 (*
-  ioref.ml -- purely functional, thread-safe references
+  refio.ml -- purely functional, thread-safe references
 *)
 
 open Dsl
-open Io
+module IO = Io
 
 module type RefIOAPI = sig
   type 'a f
@@ -20,8 +20,6 @@ module type RefIOAPI = sig
 end
 
 module RefIO : RefIOAPI = struct
-  open Dsl
-
   type 'a ioref = Ref of 'a ref
 
   type 'a f = 'a ioref
