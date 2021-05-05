@@ -1,3 +1,3 @@
 <AsnLib> or <Lib>: include
 <_build>: include
-<**/*>  : thread, use_str, package(CS51Utils), package(cohttp-lwt-unix), package(cohttp), package(lwt), strict-sequence, warn(A-4-33-40-41-42-43-34-44)
+<**/*>  : thread, use_str, package(CS51Utils), package(cohttp), package(lwt), package(cohttp-lwt-unix), strict-sequence, warn(A-4-33-40-41-42-43-34-44)
