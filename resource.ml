@@ -2,7 +2,6 @@
   resource.ml -- closeable and composable resource management
 *)
 
-module IO = Io
 open Dsl
 include Instances.ResourceInstances
 

@@ -2,6 +2,7 @@
   drome.ml -- convenient module aliases for the drome library
 *)
 
-module IO = Io
-module RefIO = Refio.RefIO
+include Dsl
+module IO = IO
 module Resource = Resource
+module RefIO = RefIO

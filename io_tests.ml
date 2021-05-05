@@ -3,7 +3,7 @@
 *)
 
 open Dsl
-open Drome.IO
+open IO
 open Instances.IOInstances
 open CS51Utils.Absbook
 

@@ -1,21 +1,24 @@
 BUILD = ocamlbuild -use-ocamlfind
 
-all: drome dsl io resource refio io_tests resource_tests refio_tests util typeclasses instances doc demo
+all: drome dsl demo io resource refio io_tests resource_tests refio_tests util typeclasses instances doc 
 
-io: io.ml util dsl instances
-	$(BUILD) io.byte
+util: util.ml
+	$(BUILD) util.byte
 
-resource: resource.ml dsl io instances
-	$(BUILD) resource.byte
-
-refio: refio.ml dsl io
-	$(BUILD) refio.byte
+dsl: dsl.ml
+	$(BUILD) dsl.byte
 
 drome: drome.ml dsl util
 	$(BUILD) drome.byte
 
-dsl: dsl.ml
-	$(BUILD) dsl.byte
+io: IO.ml util dsl instances
+	$(BUILD) IO.byte
+
+resource: resource.ml dsl io instances
+	$(BUILD) resource.byte
+
+refio: refIO.ml dsl io
+	$(BUILD) refIO.byte
 
 io_tests: io_tests.ml dsl drome
 	$(BUILD) io_tests.byte
@@ -25,9 +28,6 @@ resource_tests: resource_tests.ml drome
 
 refio_tests: refio_tests.ml drome
 	$(BUILD) refio_tests.byte
-
-util: util.ml
-	$(BUILD) util.byte
 
 typeclasses: typeclasses.ml util
 	$(BUILD) typeclasses.byte
@@ -41,7 +41,7 @@ doc: writeup.md
 test: resource_tests io_tests refio_tests
 	./io_tests.byte && ./resource_tests.byte && ./refio_tests.byte
 
-demo: demo.ml drome
+demo: demo.ml io drome
 	$(BUILD) demo.byte
 
 clean:
