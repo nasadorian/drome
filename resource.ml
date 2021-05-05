@@ -2,9 +2,9 @@
   resource.ml -- closeable and composable resource management
 *)
 
+module IO = Io
 open Dsl
 include Instances.ResourceInstances
-module IO = Io
 
 (* make a r -- acquire resource `a` in IO, and encode how to release it
  * with function `r` *)

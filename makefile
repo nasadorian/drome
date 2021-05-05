@@ -1,4 +1,4 @@
-BUILD = ocamlbuild -use-ocamlfind -pkg cohttp-lwt-unix
+BUILD = ocamlbuild -use-ocamlfind
 
 all: drome dsl io resource refio io_tests resource_tests refio_tests util typeclasses instances doc demo
 
