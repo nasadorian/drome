@@ -1,6 +1,6 @@
-BUILD = ocamlbuild -use-ocamlfind
+BUILD = ocamlbuild -use-ocamlfind -pkg cohttp-lwt-unix
 
-all: drome dsl io resource refio io_tests resource_tests refio_tests util typeclasses instances doc
+all: drome dsl io resource refio io_tests resource_tests refio_tests util typeclasses instances doc demo
 
 io: io.ml util dsl instances
 	$(BUILD) io.byte
@@ -40,6 +40,9 @@ doc: writeup.md
 
 test: resource_tests io_tests refio_tests
 	./io_tests.byte && ./resource_tests.byte && ./refio_tests.byte
+
+demo: demo.ml drome
+	$(BUILD) demo.byte
 
 clean:
 	rm -rf *.byte; rm writeup.pdf

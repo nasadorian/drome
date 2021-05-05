@@ -17,8 +17,8 @@ let noop : unit io = pure ()
 (* sleep t -- pauses the current thread for `t` seconds *)
 let sleep (t : float) : unit io = make (fun _ -> Thread.delay t)
 
-(* unsafe_run_sync -- executes an IO program synchronously;
- * "unsafe" means unhandled errors in sequence will be thrown *)
+(* unsafe_run_sync io -- synchronous runtime for IO programs
+ * N.B. "unsafe" means unhandled errors in program sequence will be thrown *)
 let rec unsafe_run_sync : type a. a io -> a =
   (* used for Attempt nodes; catches exceptions in `result` for a given IO *)
   let lift_attempt : type a. a io -> (a, exn) result io =
@@ -61,8 +61,8 @@ let rec unsafe_run_sync : type a. a io -> a =
   | HandleErrorWith (h, io) ->
       unsafe_run_sync (lift_attempt io >>= Result.fold ~ok:pure ~error:h)
 
-(* unsafe_run_async io cb -- executes IO program in another thread; calling
- * callback `cb` when finished executing *)
+(* unsafe_run_async io cb -- executes IO program in another thread;
+ * callback `cb` is executed once finished *)
 let unsafe_run_async (cb : 'a -> 'b) : 'a io -> Thread.t =
   Thread.create (cb << unsafe_run_sync)
 

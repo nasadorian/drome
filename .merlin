@@ -1,3 +1,5 @@
 S .
 B _build/
-PKG threads.posix cohttp CS51Utils
+PKG threads.posix
+PKG CS51Utils
+PKG cohttp lwt
