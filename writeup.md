@@ -6,6 +6,8 @@ Spring 2021
 
 # drome: The IO Monad and Friends for OCaml
 
+![](img/camel-train.png)
+
 ## Abstract
 
 OCaml sits at a "sweet spot" in the world of programming languages as it provides support for multiple programming paradigms, a powerful type system and novel abstractive capabilities. It is a friendly functional language well suited for beginners, but makes a tradeoff to achieve this status - it is neither pure nor lazy by default like its more advanced sister language Haskell. In an attempt to bridge this gap, we offer an implementation of the IO monad and related effect management utilities for OCaml.
@@ -22,7 +24,7 @@ When developing `drome` programs we import a composite module aptly named `Drome
 
 Typeclasses represent small, interrelated pieces of functionality universally quantified over types and type constructors. They are are a central concept in strongly typed functional programming and it is thus assumed that the reader is at least partly familiar with `Functor`, `Applicative` and `Monad`.
 
-The `IO` and `Resource` datatypes present in `drome` admit a subset of the typeclass hierarchy found in Haskell's `Prelude` or in Scala's `cats` library. There are also two extensions `ApplicativeError` and `MonadError` specifically useful for the `IO` type, as they encode error handling capabilities. All typeclass instances live in the `instances.ml` module. When importing any of `drome`'s modules, the respective typeclass instances and special syntax are automatically included, so the user does not need to explicitly typeclass instances.
+The `IO` and `Resource` datatypes present in `drome` admit a subset of the typeclass hierarchy found in Haskell's `Prelude` or in Scala's `cats` library. There are also two extensions `ApplicativeError` and `MonadError` specifically useful for the `IO` type which support  error handling capabilities. All typeclass instances live in the `instances.ml` module. When importing any of `drome`'s modules, the respective typeclass instances and special syntax are automatically included, so the user does not need to explicitly import typeclass instances.
 
 Given the hierarchical nature of typeclasses, we are able to derive
 `Applicative` and `Functor` given a `Monad` instance so a "module-functor" is
@@ -37,15 +39,7 @@ This will prevent compile errors confusing duplicate operators such as `Resource
 
 ## The IO Monad
 
-So what is the `IO` monad exactly, besides a way to defer computations? The `IO` datatype is defined as a generalized algebraic datatype (GADT) which encodes all the possible ways we can construct, compose and modify side-effecting programs. The various functions and combinators used in the `IO` API build up a sequence of these operations as a pure program. It is important to note that given the inherent laziness of `IO`, programs are _descriptions_ of actions to be run at a later time.
-
-* The simplest constructor `Pure` lifts a pure value into the `IO` context, without any deferral.
-* `Suspend` captures a `thunk` (aka `unit -> 'a`), representing an IO action resulting in an `'a`. It is the main constructor and is instantiated via `IO.make`.
-* `Map` encodes the typical `map` functionality, applying a function `f : 'a -> 'b` to an `'a io` and resulting in a `'b io`. 
-* `Bind` encodes `bind` or "flatMap", representing the chaining of `IO` programs together through a function `'a -> 'b io`. We will see that `Bind` is the most commonly used and strictly most powerful node in the entire DSL. In fact, `Bind` can be used to represent `Map`, but we maintain `Map` as separate due to specific optimizations we can perform on it.
-* `RaiseError` sequences an error to be thrown in the running of the program.
-* `Attempt` captures the first error arising from the program beneath it, yielding a `result` datatype with the error in the right channel.
-* `HandleErrorWith` captures errors discards them and provides a default value of type `'a io`.
+So what is the `IO` monad exactly besides a way to defer computations? `IO` is defined as a generalized algebraic datatype (GADT) encoding the means by which we can construct, compose and modify side-effecting programs. The various functions and combinators used in the `IO` API build up a sequence of operations as a pure program. It is important to note that given the inherent laziness of `IO`, programs are _descriptions_ of actions to be run at a later time just like code in a programming language. The DSL for `IO` is detailed below.
 
 ```
 type _ io =
@@ -57,7 +51,16 @@ type _ io =
   | Attempt : 'a io -> ('a, exn) result io
   | HandleErrorWith : ((exn -> 'a io) * 'a io) -> 'a io
 ```
-We'll begin our tour of the library with the canonical "hello world" example using `IO`. The main entry point for `IO` programs is the `IO.make` function which lifts a deferred computation into `IO`. _Note: Results from executing programs are shown as comments below their respective code snippets._
+
+* The simplest constructor `Pure` lifts a pure value into the `IO` context, without any deferral.
+* `Suspend` captures a `thunk` (aka `unit -> 'a`), representing an IO action resulting in an `'a`. It is the main constructor and is instantiated via `IO.make`.
+* `Map` encodes the typical `map` functionality, applying a function `f : 'a -> 'b` to an `'a io` and resulting in a `'b io`. 
+* `Bind` encodes `bind` or "flatMap", representing the chaining of `IO` programs together through a function `'a -> 'b io`. We will see that `Bind` is the most commonly used and strictly most powerful node in the entire DSL. In fact, `Bind` can be used to represent `Map`, but we maintain `Map` as separate due to specific optimizations we can perform on it.
+* `RaiseError` sequences an error to be thrown in the running of the program.
+* `Attempt` captures the first error arising from the program beneath it, yielding a `result` datatype with the error in the right channel.
+* `HandleErrorWith` captures errors discards them and provides a default value of type `'a io`.
+
+We'll begin our tour of the library with the canonical "hello world" example using `IO`. The main entry point for `IO` programs is the `IO.make` function which lifts a deferred computation into `IO`. _Note: Results from executed programs are shown as comments below their respective code snippets._
 
 ```ocaml
 open Drome
@@ -108,7 +111,7 @@ We can apply this same technique to the `IO` data type, and enable recursive bin
   let read : string io = IO.make read_line
   let print (s : string) : unit io = IO.make (fun _ -> print_endline s)
   
-  (* Combine read and print infinitely using bind and productR *)
+  (* Combine read and print infinitely via trampolined bind *)
   let rec echo () : unit io = IO.( read >>= print >>= echo ) 
 
   (* Run synchronously *)
@@ -122,11 +125,11 @@ We can apply this same technique to the `IO` data type, and enable recursive bin
   *)
 ```
 
-To aid in interpreting the `echo` function, let's break down what it does. We use the `read` function to lazily prompt the user at `stdin` then bind the resulting string into another action `print` which simply echoes the string back to `stdout`. The result of the print has type `unit io`, so we discard this value and run `echo` again using `productR`. When desugared, the `echo` program infinitely expands outward as `Bind (fun _ -> Bind (fun s -> Suspend (fun _ -> print_endline s), Suspend (fun _ -> read_line)), ...)` but can be evaluated node by node thanks to laziness.
+To aid in interpreting the `echo` function, let's break down what it does. We use the `read` function to lazily prompt the user at `stdin` then bind the resulting string into another action `print` which simply echoes the string back to `stdout`. The result of the print has type `unit io`, and since our `echo` function takes a unit argument, we bind into `echo` again. When desugared, the `echo` program infinitely expands outward as `Bind (fun _ -> Bind (fun s -> Suspend (fun _ -> print_endline s), Suspend (fun _ -> read_line)), ...)` but can be evaluated node by node thanks to the trampoline.
 
 There is another interesting technique at work under the hood in this example. When the interpreter reaches a node containing `Bind (f, Bind (g, rest))` it rearranges the two constructors using the associativity law for Monad (https://wiki.haskell.org/Monad_laws) to yield `Bind (g >=> f, rest)`. The `IO.(>=>)` operator is known as "the fish" or Kleisli composition, and it chains two monadic functions together. In cases where there are infinitely nested binds, this property allows the interpreter to make a tail recursive call to itself and make progress rather than infinitely build up the call stack. See the implementation of `IO.unsafe_run_sync` for more.
 
-Naturally, more interesting programs than `echo` can be composed with IO. Take for example the below set of functions which query a website until it yields an `HTTP/200 OK` response. The `url` value is an `IO` program randomly returning one of two test URLs that result in a `200` or `404`, modeling a flaky service we would like to health-check. The `status_of_url` function sends a `GET` request to a given URL and returns its status code as an integer. In `retry_til_ok` we run `status_of_url` up to `n` times, utilizing the `IO.attempt` combinator to capture any runtime errors in a `result` type, and match on the response code. We use the recursive bind trick here to retry this function until a `200` response is received.
+Of course, far more interesting programs than `echo` can be written with `IO`. Take for example the below set of functions which query a website until it yields an `HTTP/200 OK` response. The `url` value is an `IO` program randomly returning one of two test URLs that result in a `200` or `404`, modeling a flaky service we would like to health-check. The `status_of_url` function sends a `GET` request to a given URL and returns its status code as an integer. In `retry_til_ok` we run `status_of_url` up to `n` times, utilizing the `IO.attempt` combinator to capture any runtime errors in a `result` type, and match on the response code. We use the recursive bind trick here to retry this function until a `200` response is received.
 
 ```ocaml
   open Cohttp
@@ -136,7 +139,7 @@ Naturally, more interesting programs than `echo` can be composed with IO. Take f
   (* Return one of two URLs based on a coin toss *)
   let url : Uri.t io =
     IO.make (fun _ ->
-        (if Random.int 1 = 0 then "https://httpstat.us/200"
+        (if Random.int 2 = 0 then "https://httpstat.us/200"
         else "https://httpstat.us/404")
         |> Uri.of_string)
 
@@ -149,23 +152,28 @@ Naturally, more interesting programs than `echo` can be composed with IO. Take f
   (* Handle errors using the `attempt` combinator and return Ok when 200 *)
   let rec retry_til_ok (n : int) : (int, exn) result io =
     let open IO in
-    url >>= fun u ->
-    status_of_url u |> attempt >>= function
-    | Result.Ok 200 -> pure (Result.ok 200)
-        
-    | _ -> print_endline "Failed, retrying";retry_til_ok (n - 1)
+    if n = 0 then pure @@ Result.error (Failure "unable to reach test URL")
+    else
+      url >>= fun u ->
+      status_of_url u |> attempt >>= function
+      | Result.Ok 200 -> pure (Result.ok 200)
+      | _ ->
+          print_endline "Failed, retrying";
+          retry_til_ok (n - 1)
 
-  IO.((url >>= status_of_url) |> unsafe_run_sync);;
+  retry_til_ok 10 |> IO.unsafe_run_sync;;
   (*
-    - : int = 200
+    Failed, retrying
+    Failed, retrying
+    - : (int, exn) result = Ok 200
   *)
 ```
 
 ## Resource
 
-The side-effecting actions we use are not always stateless. In many cases, we would like to perform effects on resources which require acquisition and cleanup steps. Enter `Resource`, a utility which builds on top of `IO` to encodes exactly this pattern. To construct a closeable resource we use the `Resource.make` function which accepts two arguments: `acquire` which is the action producing the resource of type `'a io`, and `release` which is a function `'a -> unit io` closing the resource. The `release` action will _always run_ even if intermediate steps fail when using the resource, not unlike the "context manager" construct in Python or Java's `try-catch-finally`.
+The side-effecting actions we use are not always stateless. In many cases, we would like to perform effects on resources which require acquisition and cleanup steps. Enter `Resource`, a utility which builds on top of `IO` to support exactly this pattern. To construct a closeable resource we use the `Resource.make` function which accepts two arguments: `acquire` which is the action producing the resource of type `'a io`, and `release` which is a function `'a -> unit io` closing the resource. The `release` action will _always run_ even if intermediate steps fail when using the resource, not unlike the "context manager" construct in Python or Java's `try-catch-finally`. Errors thrown during the usage of a resource will be sequenced _after_ the resource has been finalized.
 
-For example we can open a file handle, pipe all of its contents into a memory location then finally close the handle. In the below code snippet, we construct a `Resource` by encoding how to acquire and release a file handle with `open_file` and `close`. We can then execute an `IO` action on this self-closing file handle by calling `Resource.use` with `drain_file mem`. Our `close` function will, upon finalization, write a sentinel value to the memory location as well as proof that it ran. When we inspect the contents of the memory location after the file has been used, we see that the string "closed" is the last string on the stack.
+With `Resource` we can open a file handle, pipe all of its contents into a memory location then finally close the handle. In the below code snippet, we construct a `Resource` using our `open_file` and `close` functions. We can then execute an `IO` action on this self-closing file handle by calling `Resource.use` with `drain_file`. Our `close` function will, upon finalization, write a sentinel value to the memory location as well to prove that it ran. When we inspect the contents of the memory location after the file has been used, we see that the string "closed" is the last string on the stack.
 
 ```ocaml
   (* open a file in IO context *)
@@ -214,14 +222,14 @@ program when the `Resource.use` interpreter is called.
 
 ```ocaml
 type _ resource =
-  | Allocate : (('a -> unit io) * 'a io) -> 'a resource
+  | Allocate : ('a io * ('a -> unit io)) -> 'a resource
   | RPure : 'a -> 'a resource
   | RBind : (('a -> 'b resource) * 'a resource) -> 'b resource
 ```
 
 In order to demonstrate some of `Resource`'s typeclass capabilities, we reach
 for 3 different file handles and zip them together using the `Applicative.( >*<
-) aka zip` operation. We allow the `drain` computation to fail as soon as one file has been exhausted, without a try-catch block. While not a readily suggested usage pattern, this example proves that regardless of errors being thrown during use, the resources in question will be closed. See below how all three resource finalizers will run in reverse order, and the arising error is maintained and resequenced.
+) aka zip` operation. We allow the `drain` computation to fail as soon as one file has been exhausted, without a try-catch block. While allowing inexplicit exceptions to be thrown is not a suggested usage pattern, this example proves that that resources will be closed regardless of errors. See below how all three resource finalizers run in reverse order, and the arising error is maintained and resequenced.
 
 ```ocaml
   (* open a file in IO context *)
@@ -230,11 +238,17 @@ for 3 different file handles and zip them together using the `Applicative.( >*<
   (* close file *)
   let close f = IO.make (fun _ -> close_in f)
 
+  (* close file *)
+  let close s f =
+    IO.make (fun _ ->
+        print_endline ("closing " ^ s);
+        close_in f)
+
   let file0, file1, file2 =
     Resource.
-      ( make (open_file "./test-data/file0") close,
-        make (open_file "./test-data/file1") close,
-        make (open_file "./test-data/file2") close )
+      ( make (open_file "./test-data/file0") (close "file0"),
+        make (open_file "./test-data/file1") (close "file1"),
+        make (open_file "./test-data/file2") (close "file2") )
 
   (* zip resources together, Applicative style *)
   let zipped = Resource.(file0 >*< file1 >*< file2)
@@ -267,11 +281,11 @@ for 3 different file handles and zip them together using the `Applicative.( >*<
 
 ## RefIO
 
-Another useful datatype we can implement on top of `IO` is called
-`RefIO`, elsewhere simply referred to as `Ref` but renamed here to avoid name
-collision with OCaml's `ref` primitive. The `RefIO` type represents a purely
+There is another useful datatype we can implement on top of `IO` called
+`RefIO`, in the literature simply referred to as `Ref` but renamed here to avoid confusion
+with OCaml's `ref` primitive. The `RefIO` type represents a purely
 functional reference that is thread-safe and supports atomic access without any
-locking primitives. `RefIO`'s simple API is detailed below.
+locking primitives. `RefIO`'s API is detailed below.
 
 ```ocaml
 module type RefIO_API = sig
@@ -285,12 +299,12 @@ end
 ```
 
 Every function modifying a purely functional reference is suspended in `IO`,
-and it is indeed the laziness of the `IO` type which allows atomic updates. Since any chain of actions performed on a `RefIO` (`get`, `set`, etc.) results in an `IO`, we are simply building up a sequence of deferred actions to run in order when it comes time to execute our program.
+and it is indeed the laziness of the `IO` type which allows atomic updates. Since any chain of actions performed on a `RefIO` (`get`, `set`, etc.) results in an `IO`, we declaratively build up a sequence of deferred actions to run _in order_ when it comes time to execute.
 
 Beyond atomicity in `get` and `set`, `RefIO` provides the `update` and `modify`
 functions which perform multiple actions at once with the underlying reference.
 This "get-then-set" style behavior is supported by means of a simple
-concurrency trick called a "compare-and-swap loop" (https://en.wikipedia.org/wiki/Compare-and-swap). When performing an update or modification to the reference, an inner loop function will continually attempt to verify that the underlying reference has not changed since call time before it makes any changes. Thus we achieve lock-free concurrent access.
+concurrency trick called a "compare-and-swap loop" (https://en.wikipedia.org/wiki/Compare-and-swap). When performing an update or modification to the reference, an inner loop function will continually attempt to verify that the underlying reference has not changed since call time before it makes any changes.
 
 In the example below we bring together multiple concepts from `drome`, using
 threads to asynchronously update a shared mutable database in `RefIO`. We

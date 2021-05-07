@@ -16,7 +16,7 @@ module HTTP_Demo = struct
   (* Return one of two URLs based on a coin toss *)
   let url : Uri.t io =
     IO.make (fun _ ->
-        (if Random.int 1 = 0 then "https://httpstat.us/200"
+        (if Random.int 2 = 0 then "https://httpstat.us/200"
         else "https://httpstat.us/404")
         |> Uri.of_string)
 
@@ -29,12 +29,14 @@ module HTTP_Demo = struct
   (*Handle errors using the `attempt` combinator and return Ok when 200 *)
   let rec retry_til_ok (n : int) : (int, exn) result io =
     let open IO in
-    url >>= fun u ->
-    status_of_url u |> attempt >>= function
-    | Result.Ok 200 -> pure (Result.ok 200)
-    | _ ->
-        print_endline "Failed, retrying";
-        retry_til_ok (n - 1)
+    if n = 0 then pure @@ Result.error (Failure "unable to reach test URL")
+    else
+      url >>= fun u ->
+      status_of_url u |> attempt >>= function
+      | Result.Ok 200 -> pure (Result.ok 200)
+      | _ ->
+          print_endline "Failed, retrying";
+          retry_til_ok (n - 1)
 end
 
 module Resource_File = struct
