@@ -298,10 +298,8 @@ end
 Every function modifying a purely functional reference is suspended in `IO`,
 and it is indeed the laziness of the `IO` type which allows atomic updates. Since any chain of actions performed on a `RefIO` (`get`, `set`, etc.) results in an `IO`, we declaratively build up a sequence of deferred actions to run _in order_ when it comes time to execute.
 
-Beyond atomicity in `get` and `set`, `RefIO` provides the `update` and `modify`
-functions which perform multiple actions at once with the underlying reference.
-This "get-then-set" style behavior is supported by means of a simple
-concurrency trick called a "compare-and-swap loop" (https://en.wikipedia.org/wiki/Compare-and-swap). When performing an update or modification to the reference, an inner loop function will continually attempt to verify that the underlying reference has not changed since call time before it makes any changes.
+Beyond atomicity in `get` and `set`, `RefIO` provides the `update` and `modify` functions which perform "get-then-set" actions at once with the underlying reference.
+This style of behavior is enabled by a simple concurrency trick called a "compare-and-swap loop" (https://en.wikipedia.org/wiki/Compare-and-swap). When performing an update or modification to the reference, an inner loop function will continually attempt to verify that the underlying reference has not changed since call time before it makes any changes.  
 
 In the example below we bring together multiple concepts from `drome`, using
 threads to asynchronously update a shared mutable database in `RefIO`. We
