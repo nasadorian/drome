@@ -308,7 +308,7 @@ threads to asynchronously update a shared mutable database in `RefIO`. We
 introduce a `student` datatype and a mutable database containing the students
 in a school.
 
-The `database` object contains a reference to the initial state of the database, and a number of functions are composed to perform the `update_database` routine which processes `action` objects against the database. Another routine called `run_tardy_report` counts the number of tardy students for the day and resets all tardy fields to `false`.
+The `database` object contains a reference to the initial state of the database, and a number of functions are composed to perform the `update_database` routine which processes `action` objects against the database in parallel. Another routine called `run_tardy_report` counts the number of tardy students for the day and resets all tardy fields to `false`.
 
 The updates occuring within `update_database` run in multiple OCaml threads iva the `IO.suspend_async'` function. It is also worthwhile to note that given the deferred nature of `RefIO` instances, the top level reference to `database` is pure. So without passing the same reference to both the `update_database` and `run_tardy_report` functions we will not be updating the same instance of the database. In the last example, we show that passing the same reference to an expression which runs both functions together will achieve what we want.
 
