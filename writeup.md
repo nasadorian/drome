@@ -308,7 +308,7 @@ in a school.
 
 The `database` value contains a reference to the initial state of the database, and a number of functions are composed to perform the `update_database` routine which processes a list of `action` objects against the database in parallel. Another routine called `run_tardy_report` counts the number of tardy students for the day and resets all tardy fields to `false`.
 
-The updates occuring within `update_database` run in multiple OCaml threads via the `IO.suspend_async'` function. It is also worthwhile to note that given the deferred nature of `RefIO` instances, the top level reference to `database` is pure. So without passing the same reference to both the `update_database` and `run_tardy_report` functions we will not be updating the same instance of the database. In the last example, we show that passing the same reference to an expression which runs both functions together will achieve what we want.
+The updates occuring within `update_database` run in multiple OCaml threads via the `IO.suspend_async'` function. It is also worthwhile to note that the top level reference to `database` is pure since it is deferred and can only be mutated by direct reference to one instance of it. So without passing the same reference to both the `update_database` and `run_tardy_report` functions we will not be updating the same instance of the database. In the last example, we show that passing the same reference to an expression which runs both functions together will achieve what we want.
 
 ```ocaml
   (* student rows for database *)
