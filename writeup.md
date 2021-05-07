@@ -4,7 +4,7 @@ Spring 2021
 
 ---
 
-# drome: The IO Monad for OCaml
+# drome: The IO Monad and Friends for OCaml
 
 ## Abstract
 
