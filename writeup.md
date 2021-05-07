@@ -302,7 +302,7 @@ Beyond atomicity in `get` and `set`, `RefIO` provides the `update` and `modify` 
 This style of behavior is enabled by a simple concurrency trick called a "compare-and-swap loop" (https://en.wikipedia.org/wiki/Compare-and-swap). When performing an update or modification to the reference, an inner loop function will continually attempt to verify that the underlying reference has not changed since call time before it makes any changes.  
 
 In the example below we bring together multiple concepts from `drome`, using
-threads to asynchronously update a shared mutable database in `RefIO`. We
+threads to asynchronously update a shared mutable database. We
 introduce a `student` datatype and a mutable database containing the students
 in a school.
 
