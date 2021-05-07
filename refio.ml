@@ -23,8 +23,8 @@ let update (f : 'a -> 'a) (Ref r : 'a ioref) : unit io =
   let rec cas a ar = if a = !ar then ar := f a else cas !ar ar in
   IO.make (fun _ -> cas !r r)
 
-(* modify f r -- thread-safe transformation of the value in the ref;
- * this is similar to the State monad's modify function *)
+(* modify f r -- compute a result `b` from the value in the ref, state monad
+ * style *)
 let modify (f : 'a -> 'a * 'b) (Ref r : 'a ioref) : 'b io =
   let rec cas a ar =
     if a = !ar then (

@@ -1,7 +1,6 @@
 (*
   dsl.ml -- domain specific language types for IO and related constructs
 *)
-
 open Util
 
 type _ io =
@@ -14,6 +13,6 @@ type _ io =
   | HandleErrorWith : ((exn -> 'a io) * 'a io) -> 'a io
 
 type _ resource =
-  | Allocate : (('a -> unit io) * 'a io) -> 'a resource
+  | Allocate : ('a io * ('a -> unit io)) -> 'a resource
   | RPure : 'a -> 'a resource
   | RBind : (('a -> 'b resource) * 'a resource) -> 'b resource

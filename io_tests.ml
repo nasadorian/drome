@@ -7,14 +7,6 @@ open IO
 open Instances.IOInstances
 open CS51Utils.Absbook
 
-(* infinite looping test -- interactive and can be tested manually *)
-let repl_test _ =
-  let read = make read_line in
-  let print (s : string) : unit io = make (fun _ -> print_endline s) in
-  (* trampolining used in IO.unsafe_run_async allows infinite loops! *)
-  let rec loop () = read >>= print >>= loop in
-  loop
-
 (* functor map tests *)
 let map_tests _ =
   let m0 = Pure 38 in

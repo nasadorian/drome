@@ -2,10 +2,9 @@
   io.ml -- runtime implementation for the IO monad
 *)
 
-open Instances
 open Util
 open Dsl
-include IOInstances
+include Instances.IOInstances
 
 (* make a -- lifts a deferred action into IO;
  * this is the main starting point for most IO programs *)

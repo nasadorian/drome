@@ -26,6 +26,8 @@ module IOFunctor : Functor with type 'a f = 'a io = struct
   let map f io = Map (f, io)
 
   let ( <$> ) io f = map f io
+
+  let void io = map (fun _ -> ()) io
 end
 
 module IOApplicativeError : ApplicativeError with type 'a f = 'a io = struct
@@ -61,7 +63,7 @@ end
 module ResourceMonad : Monad with type 'a f = 'a resource = MakeMonad (struct
   type 'a f = 'a resource
 
-  let return a = Allocate ((fun _ -> Pure ()), Suspend (fun _ -> a))
+  let return a = Allocate (Suspend (fun _ -> a), fun _ -> Pure ())
 
   let bind f res = RBind (f, res)
 end)

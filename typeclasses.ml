@@ -17,6 +17,8 @@ module type Functor = sig
   val map : ('a -> 'b) -> 'a f -> 'b f
 
   val ( <$> ) : 'a f -> ('a -> 'b) -> 'b f
+
+  val void : 'a f -> unit f
 end
 
 module type Applicative = sig
@@ -134,6 +136,8 @@ module MakeFunctor (A : Applicative) : Functor with type 'a f = 'a A.f = struct
   let map f fa = pure f <*> fa
 
   let ( <$> ) fa f = map f fa
+
+  let void fa = map (fun _ -> ()) fa
 end
 
 (* Derive MonadError from ApplicativeError and Monad *)
