@@ -1,6 +1,6 @@
 Narek Asadorian \
 CSCI E-51 \
-Spring 2021 \
+Spring 2021
 
 ---
 
