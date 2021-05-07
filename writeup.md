@@ -236,9 +236,6 @@ for 3 different file handles and zip them together using the `Applicative.( >*<
   let open_file path = IO.make (fun _ -> open_in path)
 
   (* close file *)
-  let close f = IO.make (fun _ -> close_in f)
-
-  (* close file *)
   let close s f =
     IO.make (fun _ ->
         print_endline ("closing " ^ s);
