@@ -451,7 +451,7 @@ available in `drome`. The central runtime which serves as the basis for the othe
 
 In this document we've also made use of `IO.unsafe_run_async'` and `IO.suspend async'` which give the ability to run an `IO` program in another thread. The asynchronous components of the runtime rely on the main interpreter and the basic threading primitives found in OCaml. In the asynchronous runtimes we provide the option to run a callback on the results of the computation. Non-callback variants are tagged with a prime as in `IO.unsafe_run_async'`. It is acknowledged that in OCaml `4.11.x` there is no true concurrency model, so the threads being "spawned" are merely coroutines. However even with the advent of proper concurrency our approach would still work, pushing the synchronous interpreter into a new thread.
 
-The full fledged power of a synchronous `IO` runtime is best appreciated once one realizes that other "languages" can be transpiled into `IO`. For example in the case of `Resource`, we create a new DSL with its own semantics which can through the interpretation become an `IO` program. Indeed this concept can be taken to further a extent for future features such as cancelable asynchrony or thread scheduling.
+The full fledged power of a synchronous `IO` runtime is best appreciated when other "languages" are transpiled into `IO`. For example in the case of `Resource`, we create a new DSL with its own semantics which can through the interpretation become an `IO` program. Indeed this concept can be taken to further a extent for future features such as cancelable asynchrony or thread scheduling.
 
 ## Acknowledgements
 
