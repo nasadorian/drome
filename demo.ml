@@ -3,30 +3,51 @@ open Cohttp_lwt_unix
 open Drome
 
 module Echo_Demo = struct
+  (*
+    Understanding trampolined infinite binds...
+
+    read = Suspend (fun _ -> read_line)
+    print = fun s -> Suspend (fun _ -> print_endline s)
+    echo = fun _ -> read >>= print >>= echo
+    echo = Bind (echo, Bind (print, read))
+
+    ---
+
+    - This is `echo` without unfolding the recursion
+    Bind (fun _ -> echo, Bind (print, read))
+
+    - After bind associativity is applied
+    Bind (print >=> (fun _ -> echo), read)
+
+    - Substitute `read` function for its constructor
+    - Now the interpreter can run this node
+    Bind (print >=> (fun _ -> echo), Suspend (fun _ -> read_line))
+  *)
+
   (* infinite looping test -- interactive and can be tested manually *)
   let read = IO.make read_line
 
   let print (s : string) : unit io = IO.make (fun _ -> print_endline s)
 
   (* trampolining used in IO.unsafe_run_async allows infinite loops! *)
-  let rec loop () = IO.(read >>= print >>= loop)
+  let rec echo () = IO.(read >>= print >>= echo)
 end
 
 module HTTP_Demo = struct
-  (* Return one of two URLs based on a coin toss *)
+  (* return one of two URLs based on a coin toss *)
   let url : Uri.t io =
     IO.make (fun _ ->
         (if Random.int 2 = 0 then "https://httpstat.us/200"
         else "https://httpstat.us/404")
         |> Uri.of_string)
 
-  (*GET a URL and convert its status to an integer *)
+  (* GET a URL and convert its status to an integer *)
   let status_of_url (url : Uri.t) : int io =
     IO.make (fun _ ->
         Client.get url |> Lwt_main.run |> fst |> Response.status
         |> Code.code_of_status)
 
-  (*Handle errors using the `attempt` combinator and return Ok when 200 *)
+  (* handle errors using the `attempt` combinator and return Ok when 200 *)
   let rec retry_til_ok (n : int) : (int, exn) result io =
     let open IO in
     if n = 0 then pure @@ Result.error (Failure "unable to reach test URL")

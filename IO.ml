@@ -33,7 +33,7 @@ let rec unsafe_run_sync : type a. a io -> a =
       match io with
       | Pure a -> unsafe_run_sync (f a)
       | Suspend ta -> unsafe_run_sync (f (ta ()))
-      (* Trampolining occurs here via monad associativity *)
+      (* trampolining occurs here via monad associativity *)
       | Bind (g, io') -> unsafe_run_sync (Bind (g >=> f, io'))
       | Map (g, io') -> unsafe_run_sync (Bind ((fun a -> f (g a)), io'))
       | RaiseError e -> raise e
@@ -47,7 +47,7 @@ let rec unsafe_run_sync : type a. a io -> a =
       | Pure a -> f a
       | Suspend ta -> f (ta ())
       | Bind (g, io') -> unsafe_run_sync (io' >>= fun a -> g a <$> f)
-      (* Map fusion via functor composition law *)
+      (* map fusion via functor composition law *)
       | Map (g, io') -> unsafe_run_sync (Map (f << g, io'))
       | RaiseError e -> raise e
       | Attempt io -> unsafe_run_sync (Map (f, lift_attempt io))
