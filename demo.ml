@@ -9,9 +9,6 @@ module Echo_Demo = struct
     read = Suspend (fun _ -> read_line)
     print = fun s -> Suspend (fun _ -> print_endline s)
     echo = fun _ -> read >>= print >>= echo
-    echo = Bind (echo, Bind (print, read))
-
-    ---
 
     - This is `echo` without unfolding the recursion
     Bind (fun _ -> echo, Bind (print, read))
