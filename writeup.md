@@ -129,6 +129,13 @@ To aid in interpreting the `echo` function, let's break down what it does. We us
 
 There is another interesting technique at work under the hood in this example. When the interpreter reaches a node containing `Bind (f, Bind (g, rest))` it rearranges the two constructors using the associativity law for Monad (https://wiki.haskell.org/Monad_laws) to yield `Bind (g >=> f, rest)`. The `IO.(>=>)` operator is known as "the fish" or Kleisli composition, and it chains two monadic functions together. In cases where there are infinitely nested binds, this property allows the interpreter to make a tail recursive call to itself and make progress rather than infinitely build up the call stack. See the implementation of `IO.unsafe_run_sync` for more.
 
+_Monad associativity as it translates to the IO DSL_.
+
+```
+Bind (f, Bind (g, io))  =  (io >>= g) >>= f
+Bind (g >=> f, io)      =  io >>= (fun x -> (g x) >>= f)
+```
+
 Of course, far more interesting programs than `echo` can be written with `IO`. Take for example the below set of functions which query a website until it yields an `HTTP/200 OK` response. The `url` value is an `IO` program randomly returning one of two test URLs that result in a `200` or `404`, modeling a flaky service we would like to health-check. The `status_of_url` function sends a `GET` request to a given URL and returns its status code as an integer. In `retry_til_ok` we run `status_of_url` up to `n` times, utilizing the `IO.attempt` combinator to capture any runtime errors in a `result` type, and match on the response code. We use the recursive bind trick here to retry this function until a `200` response is received.
 
 ```ocaml
@@ -459,4 +466,5 @@ The full fledged power of a synchronous `IO` runtime is best appreciated when ot
 (https://typelevel.org/cats-effect/).
 * `RefIO` implementation was informed by Fabio Labella's talk on Ref and Deffered (https://vimeo.com/366191463)
 * The Free monad encoding of `IO` and some of the runtime optimizations seen in `drome` are also inspired by Runar Bjarnason and Paul Chiusano's "Functional Programming in Scala" (https://www.manning.com/books/functional-programming-in-scala)
+
 
