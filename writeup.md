@@ -6,7 +6,7 @@ Spring 2021
 
 # drome: The IO Monad and Friends for OCaml
 
-![](img/camel-train.png)
+![](img/camel-train.jpg)
 
 ## Abstract
 
