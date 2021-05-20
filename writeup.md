@@ -15,6 +15,14 @@ Our library is named `drome` after the versatile and hard-working Dromedary came
 
 When developing `drome` programs we import a composite module aptly named `Drome` which combines the `IO`, `Resource` and `RefIO` modules under one namespace alongside the data types from our DSL. These are the only necessary modules for the end user to interact with. All of the demo code seen in this document is available in `demo.ml`.
 
+```ocaml
+open Drome;;
+IO.(pure 42 |> unsafe_run_sync);;
+(*
+  - : int = 42
+*)
+```
+
 ## Typeclasses
 
 Typeclasses represent small, interrelated pieces of functionality universally quantified over types and type constructors. They are are a central concept in strongly typed functional programming and it is thus assumed that the reader is at least partly familiar with `Functor`, `Applicative` and `Monad`.
